@@ -1,79 +1,6 @@
-import { useState } from 'react';
-import { Mail, Phone, Linkedin, Github, Send, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Phone, Linkedin, Github, Send, MapPin } from 'lucide-react';
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: '',
-  });
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [statusMessage, setStatusMessage] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('loading');
-    setStatusMessage('');
-
-    try {
-      const configuredEndpoint = import.meta.env.VITE_CONTACT_ENDPOINT;
-      const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || 'bvijaycloud@gmail.com';
-      const endpoint =
-        configuredEndpoint ||
-        `https://formsubmit.co/ajax/${encodeURIComponent(contactEmail)}`;
-
-      if (!endpoint) {
-        throw new Error('Contact form endpoint is not configured.');
-      }
-
-      const body = new URLSearchParams();
-      body.set('name', formData.name);
-      body.set('email', formData.email);
-      body.set('message', formData.message);
-      body.set('_subject', 'New message from your portfolio site');
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
-        body,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send message');
-      }
-
-      setStatus('success');
-      setStatusMessage(result.message || 'Message sent successfully!');
-      setFormData({ name: '', email: '', message: '' });
-
-      setTimeout(() => {
-        setStatus('idle');
-        setStatusMessage('');
-      }, 5000);
-    } catch (error) {
-      console.error('Contact form submission failed', error);
-      setStatus('error');
-      setStatusMessage(
-        error instanceof Error
-          ? error.message || 'Failed to send message'
-          : 'Failed to send message'
-      );
-    }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   return (
     <section id="contact" className="relative py-24 px-6">
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/30 to-slate-950" />
@@ -180,13 +107,16 @@ export default function Contact() {
           </div>
 
           <div>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* ✅ FORMSPREE FORM */}
+            <form
+              action="https://formspree.io/f/xqawknnn"
+              method="POST"
+              className="space-y-6"
+            >
               <div className="relative">
                 <input
                   type="text"
                   name="name"
-                  value={formData.name}
-                  onChange={handleChange}
                   placeholder="Your Name"
                   required
                   className="w-full px-4 py-4 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors duration-300"
@@ -197,8 +127,6 @@ export default function Contact() {
                 <input
                   type="email"
                   name="email"
-                  value={formData.email}
-                  onChange={handleChange}
                   placeholder="Your Email"
                   required
                   className="w-full px-4 py-4 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors duration-300"
@@ -208,8 +136,6 @@ export default function Contact() {
               <div className="relative">
                 <textarea
                   name="message"
-                  value={formData.message}
-                  onChange={handleChange}
                   placeholder="Your Message"
                   required
                   rows={6}
@@ -219,38 +145,14 @@ export default function Contact() {
 
               <button
                 type="submit"
-                disabled={status === 'loading'}
-                className="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-teal-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-teal-500/50"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2 text-lg font-semibold text-white">
-                  {status === 'loading' ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      Send Message
-                      <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                    </>
-                  )}
+                  Send Message
+                  <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
-
-              {status === 'success' && (
-                <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-green-400">{statusMessage}</p>
-                </div>
-              )}
-
-              {status === 'error' && (
-                <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-400">{statusMessage}</p>
-                </div>
-              )}
             </form>
           </div>
         </div>
