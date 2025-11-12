@@ -26,18 +26,18 @@ export default function Contact() {
         throw new Error('Contact form endpoint is not configured.');
       }
 
+      const body = new URLSearchParams();
+      body.set('name', formData.name);
+      body.set('email', formData.email);
+      body.set('message', formData.message);
+      body.set('_subject', 'New message from your portfolio site');
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
-          _subject: 'New message from your portfolio site',
-        }),
+        body,
       });
 
       const result = await response.json();
@@ -55,9 +55,12 @@ export default function Contact() {
         setStatusMessage('');
       }, 5000);
     } catch (error) {
+      console.error('Contact form submission failed', error);
       setStatus('error');
       setStatusMessage(
-        error instanceof Error ? error.message : 'Failed to send message'
+        error instanceof Error
+          ? error.message || 'Failed to send message'
+          : 'Failed to send message'
       );
     }
   };
