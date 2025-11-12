@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,33 +51,27 @@ Deno.serve(async (req: Request) => {
       throw new Error("Missing Supabase configuration");
     }
 
-    const response = await fetch(`${supabaseUrl}/rest/v1/contact_messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-        apikey: supabaseKey,
-      },
-      body: JSON.stringify({
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data, error } = await supabase
+      .from("contact_messages")
+      .insert({
         name,
         email,
         message,
-      }),
-    });
+      })
+      .select();
 
-    if (!response.ok) {
-      const error = await response.text();
+    if (error) {
       console.error("Database error:", error);
-      throw new Error(`Failed to save message: ${response.statusText}`);
+      throw new Error(`Failed to save message: ${error.message}`);
     }
-
-    const data = await response.json();
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Message sent successfully!",
-        id: data[0]?.id,
+        id: data?.[0]?.id,
       }),
       {
         status: 200,
