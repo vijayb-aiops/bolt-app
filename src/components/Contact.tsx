@@ -16,29 +16,34 @@ export default function Contact() {
     setStatusMessage('');
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const configuredEndpoint = import.meta.env.VITE_CONTACT_ENDPOINT;
+      const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || 'bvijaycloud@gmail.com';
+      const endpoint =
+        configuredEndpoint ||
+        `https://formsubmit.co/ajax/${encodeURIComponent(contactEmail)}`;
 
-      if (!supabaseUrl || !anonKey) {
-        throw new Error('Supabase configuration missing');
+      if (!endpoint) {
+        throw new Error('Contact form endpoint is not configured.');
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/send-contact-message`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${anonKey}`,
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const body = new URLSearchParams();
+      body.set('name', formData.name);
+      body.set('email', formData.email);
+      body.set('message', formData.message);
+      body.set('_subject', 'New message from your portfolio site');
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body,
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send message');
+        throw new Error(result.error || result.message || 'Failed to send message');
       }
 
       setStatus('success');
@@ -50,9 +55,12 @@ export default function Contact() {
         setStatusMessage('');
       }, 5000);
     } catch (error) {
+      console.error('Contact form submission failed', error);
       setStatus('error');
       setStatusMessage(
-        error instanceof Error ? error.message : 'Failed to send message'
+        error instanceof Error
+          ? error.message || 'Failed to send message'
+          : 'Failed to send message'
       );
     }
   };
