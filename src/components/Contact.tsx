@@ -1,6 +1,73 @@
-import { Mail, Phone, Linkedin, Github, Send, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Phone, Linkedin, Github, Send, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: '',
+  });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevents the default form submission (and page redirect)
+    setStatus('loading');
+    setStatusMessage('');
+
+    try {
+      // Replace 'xqawknnn' with YOUR actual Formspree form ID
+      const endpoint = 'https://formspree.io/f/xqawknnn';
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('message', formData.message);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formDataToSend,
+        headers: {
+          'Accept': 'application/json', // Tell Formspree we expect JSON
+        }
+      });
+
+      if (response.ok) {
+        setStatus('success');
+        setStatusMessage('Your message has been sent successfully! Thank you.');
+        setFormData({ name: '', email: '', message: '' }); // Clear the form
+      } else {
+        const result = await response.json().catch(() => ({ error: 'Submission failed' }));
+        throw new Error(result.error || `Formspree returned status ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Contact form submission failed', error);
+      setStatus('error');
+      setStatusMessage(
+        error instanceof Error
+          ? error.message || 'Failed to send message. Please try again.'
+          : 'Failed to send message. Please try again.'
+      );
+    } finally {
+      // Clear status message after 5 seconds
+      if (status === 'success' || status === 'error') {
+        setTimeout(() => {
+          setStatus('idle');
+          setStatusMessage('');
+        }, 5000);
+      }
+    }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   return (
     <section id="contact" className="relative py-24 px-6">
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/30 to-slate-950" />
@@ -107,16 +174,14 @@ export default function Contact() {
           </div>
 
           <div>
-            {/* ✅ FORMSPREE FORM */}
-            <form
-              action="https://formspree.io/f/xqawknnn"
-              method="POST"
-              className="space-y-6"
-            >
+            {/* Updated Form using handleSubmit */}
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="relative">
                 <input
                   type="text"
                   name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Your Name"
                   required
                   className="w-full px-4 py-4 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors duration-300"
@@ -127,6 +192,8 @@ export default function Contact() {
                 <input
                   type="email"
                   name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="Your Email"
                   required
                   className="w-full px-4 py-4 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors duration-300"
@@ -136,6 +203,8 @@ export default function Contact() {
               <div className="relative">
                 <textarea
                   name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   placeholder="Your Message"
                   required
                   rows={6}
@@ -145,14 +214,40 @@ export default function Contact() {
 
               <button
                 type="submit"
-                className="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-teal-500/50"
+                disabled={status === 'loading'} // Disable button while loading
+                className="group relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-teal-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2 text-lg font-semibold text-white">
-                  Send Message
-                  <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  {status === 'loading' ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                    </>
+                  )}
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
+
+              {/* Success Message */}
+              {status === 'success' && (
+                <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-green-400">{statusMessage}</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {status === 'error' && (
+                <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-red-400">{statusMessage}</p>
+                </div>
+              )}
             </form>
           </div>
         </div>
